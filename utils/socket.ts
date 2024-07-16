@@ -16,7 +16,7 @@ export const state = reactive<SomeState>({
 })
 
 // TODO: env is needed
-const URL = 'http://127.0.0.1:5000'
+const URL = 'https://mydownloadbox.perry'
 
 export const socket = io(URL)
 
