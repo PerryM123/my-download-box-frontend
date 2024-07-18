@@ -16,7 +16,7 @@ export const state = reactive<SomeState>({
 })
 
 // TODO: env is needed
-const URL = 'https://192.168.1.8'
+const URL = 'http://192.168.1.8:3001'
 
 export const socket = io(URL)
 
