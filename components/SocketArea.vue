@@ -1,8 +1,6 @@
 <template>
   <div>Hello Socket Area</div>
-  <p>Number: {{ number }}</p>
   <p>connected state: {{ socketState.connected }}</p>
-
   <button @click="sendMessage">send</button>
   <button @click="connectMe">connect</button>
   <button @click="disconnectMe">Disconnect</button>
@@ -10,15 +8,25 @@
   <div class="urlToAdd">
     <p>The Url To Add</p>
     <div>
-      <input class="inputBox" type="text" v-model="urlText" />
+      <input
+        class="inputBox"
+        type="text"
+        ref="urlBoxRef"
+        v-model="urlText"
+        @keydown.enter="addUrl"
+      />
     </div>
     <div>
       <button @click="addUrl">Add Url</button>
     </div>
   </div>
 
-  <ProgressBar v-if="number" :progress-percent="number" />
-
+  <ProgressBar
+    v-if="downloadPercentage"
+    :progress-percent="downloadPercentage"
+  />
+  <p>downloadSpeed: {{ downloadSpeed }}</p>
+  <p>Original: {{ downloadText }}</p>
   <div>
     <p>Url List</p>
     <ul v-if="urlList">
@@ -42,6 +50,13 @@ import { socket, state as socketState } from '@/utils/socket'
 interface DownloadInfo {
   percentage?: number
   file_path?: string
+  download_speed?: string
+  estimated_time?: string
+  total_bytes?: string
+  total_bytes_estimate?: string
+  downloaded_bytes?: string
+  elapsed_time?: string
+  default_template?: string
 }
 
 if (process.client) {
@@ -55,13 +70,14 @@ if (process.server) {
   // This code will only run on the client-side
 }
 
-const number = ref<number>()
-const urlText = ref<String>(
-  'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png'
-)
+const downloadPercentage = ref<number>()
+const downloadSpeed = ref<string>('')
+const downloadText = ref<string>('')
+const urlText = ref<String>('')
 const urlList = ref<String[]>([])
 const filePath = ref<String>('')
 const errorMessage = ref<String>('')
+const urlBoxRef = ref()
 
 const sendMessage = () => {
   console.log('sendMessage')
@@ -71,9 +87,6 @@ const connectMe = () => {
 
   socket.connect()
 }
-socket.on('number', (someNumber) => {
-  number.value = someNumber
-})
 const disconnectMe = () => {
   console.log('disconnectMe')
   socket.disconnect()
@@ -88,8 +101,9 @@ socket.on('updateUrls', (urlListFromServer: String[]) => {
   urlList.value = urlListFromServer
 })
 socket.on('downloadProgress', (downloadInfo: DownloadInfo) => {
-  console.log('percentage: ', downloadInfo.percentage)
-  number.value = downloadInfo.percentage
+  downloadPercentage.value = downloadInfo.percentage
+  downloadSpeed.value = downloadInfo.download_speed || ''
+  downloadText.value = downloadInfo.default_template || ''
 })
 
 socket.on('downloadComplete', (downloadInfo: DownloadInfo) => {
@@ -101,6 +115,10 @@ socket.on('alreadyDownloaded', (downloadInfo: DownloadInfo) => {
   console.log('file_path: ', downloadInfo.file_path)
   filePath.value = downloadInfo.file_path || ''
   errorMessage.value = 'Already downloaded!!'
+})
+
+onMounted(() => {
+  urlBoxRef.value.focus()
 })
 
 onUnmounted(() => {
